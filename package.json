@@ -1,0 +1,29 @@
+{
+  "name": "kavach",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kavach - Agentic Commerce Trust Rail (Razorpay Builderthon Track 01)",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node tests/run_all.js",
+    "test:passport": "node tests/test_passport_tamper.js",
+    "test:mandates": "node tests/test_mandates.js",
+    "test:concurrency": "node tests/test_concurrency.js",
+    "test:race": "node tests/test_transaction_race.js",
+    "test:webhook": "node tests/test_webhook.js",
+    "test:ingestion": "node tests/test_catalog_ingestion.js",
+    "test:multimerchant": "node tests/test_multi_merchant.js",
+    "agent:a": "node agents/agentA.js",
+    "agent:b": "node agents/agentB.js",
+    "agent:c": "node agents/agentC.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.2.0",
+    "papaparse": "^5.7.0",
+    "razorpay": "^2.9.4"
+  }
+}

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kavach — Agentic Commerce Trust Rail</title>
+<meta name="description" content="Signed merchant passports, scoped payment mandates, and an append-only record of every decision made before money moves." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ══ INSTRUMENT RAIL ══════════════════════════════════════════════ -->
+  <aside class="rail">
+    <div class="mark">
+      <span class="mark-name">Kavach</span>
+      <span class="mark-sub">trust rail</span>
+    </div>
+
+    <div id="live" class="live is-unknown">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="live-text">Checking the service…</span>
+    </div>
+
+    <nav class="nav" id="nav" role="tablist" aria-label="Views">
+      <span class="nav-thumb" id="nav-thumb" aria-hidden="true"></span>
+      <button class="nav-item is-on" role="tab" data-view="passport" aria-selected="true" aria-controls="view-passport" id="tab-passport">
+        <span class="nav-label">Passport</span>
+        <span class="nav-count mono" id="count-passport">—</span>
+      </button>
+      <button class="nav-item" role="tab" data-view="mandates" aria-selected="false" aria-controls="view-mandates" id="tab-mandates" tabindex="-1">
+        <span class="nav-label">Mandates</span>
+        <span class="nav-count mono" id="count-mandates">—</span>
+      </button>
+      <button class="nav-item" role="tab" data-view="audit" aria-selected="false" aria-controls="view-audit" id="tab-audit" tabindex="-1">
+        <span class="nav-label">Audit trail</span>
+        <span class="nav-count mono" id="count-audit">—</span>
+      </button>
+    </nav>
+
+    <div class="rail-foot">
+      <p class="claim">
+        Every bound is checked <em>before</em> the gateway is called. There is no bypass flag.
+      </p>
+      <button id="refresh" class="btn btn-quiet">Refresh now</button>
+      <p class="synced mono" id="synced">not yet synced</p>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN PANE ════════════════════════════════════════════════════ -->
+  <main class="pane">
+
+    <!-- ── PASSPORT ─────────────────────────────────────────────────── -->
+    <section id="view-passport" class="view" role="tabpanel" aria-labelledby="tab-passport">
+      <div class="head">
+        <div>
+          <h1>Merchant passport</h1>
+          <p class="lede">A catalog an agent can trust: signed at generation, re-verified on every read.</p>
+        </div>
+        <div class="head-actions">
+          <label class="field" style="margin: 0;">
+            <span class="sr">Select merchant</span>
+            <select id="merchant-select" class="mono" style="min-width: 220px;" aria-label="Select merchant"></select>
+          </label>
+          <button id="regen" class="btn btn-quiet" hidden>Sign catalog</button>
+        </div>
+      </div>
+
+      <div id="passport-notice" class="notice" hidden></div>
+
+      <div id="passport-empty" class="empty" hidden>
+        <svg class="empty-art" viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M24 5 8 11v14c0 9 6.8 15.8 16 18 9.2-2.2 16-9 16-18V11L24 5Z" />
+          <path d="M17 24h14M17 30h9" class="dim" />
+        </svg>
+        <h2>No passport signed yet</h2>
+        <p>The catalog has to be signed before an agent can price anything from it. Sign it now, or run <code>npm run agent:a</code>.</p>
+        <button id="generate" class="btn">Sign the catalog</button>
+      </div>
+
+      <div id="passport-body" hidden>
+        <div id="seal" class="seal"></div>
+
+        <div class="section-head">
+          <h2>Signed catalog</h2>
+          <p class="section-note">Priced in integer paise. Out-of-stock items stay listed and marked, never quietly dropped.</p>
+        </div>
+        <div id="catalog" class="catalog"></div>
+
+        <details class="raw" id="raw-manifest">
+          <summary><span class="raw-caret" aria-hidden="true"></span>Full signed manifest<span class="raw-hint mono">the exact bytes that were hashed</span></summary>
+          <pre class="json" id="passport-json"></pre>
+        </details>
+      </div>
+    </section>
+
+    <!-- ── MANDATES ─────────────────────────────────────────────────── -->
+    <section id="view-mandates" class="view" role="tabpanel" aria-labelledby="tab-mandates" hidden>
+      <div class="head">
+        <div>
+          <h1>Scoped mandates</h1>
+          <p class="lede">Each one is a spending ceiling with an expiry and an allowlist. Nothing wider is possible.</p>
+        </div>
+      </div>
+
+      <div id="mandates-empty" class="empty" hidden>
+        <svg class="empty-art" viewBox="0 0 48 48" aria-hidden="true">
+          <rect x="7" y="12" width="34" height="24" rx="3" />
+          <path d="M7 20h34" class="dim" />
+          <path d="M15 28h8" class="dim" />
+        </svg>
+        <h2>No mandates issued yet</h2>
+        <p>An agent gets no spending power until one is issued. Run <code>npm run agent:a</code> to issue one and spend inside it.</p>
+      </div>
+
+      <div id="mandates-body" hidden>
+        <div class="strip" id="mandate-strip"></div>
+        <div id="mandate-groups"></div>
+      </div>
+    </section>
+
+    <!-- ── AUDIT TRAIL ──────────────────────────────────────────────── -->
+    <section id="view-audit" class="view" role="tabpanel" aria-labelledby="tab-audit" hidden>
+      <div class="head">
+        <div>
+          <h1>Audit trail</h1>
+          <p class="lede" id="thesis">Reading the record…</p>
+        </div>
+        <div class="seg" role="group" aria-label="Layout">
+          <button class="seg-btn is-on" data-mode="rail" aria-pressed="true">Rail</button>
+          <button class="seg-btn" data-mode="table" aria-pressed="false">Table</button>
+        </div>
+      </div>
+
+      <div class="filters" id="filters">
+        <label class="field field-grow">
+          <span class="sr">Search the record</span>
+          <svg class="field-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.4"/><path d="M10.4 10.4 14 14"/></svg>
+          <input id="f-q" class="mono" type="search" placeholder="mdt_… · order_… · reason code · agent" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span class="sr">Filter by agent</span>
+          <select id="f-agent"><option value="">All agents</option></select>
+        </label>
+        <label class="field">
+          <span class="sr">Filter by outcome</span>
+          <select id="f-result">
+            <option value="">Any outcome</option>
+            <option value="allowed">Allowed</option>
+            <option value="blocked">Blocked or failed</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="sr">Filter by action</span>
+          <select id="f-action"><option value="">All actions</option></select>
+        </label>
+        <button id="f-clear" class="btn btn-quiet" hidden>Clear filters</button>
+      </div>
+
+      <div id="audit-empty" class="empty" hidden>
+        <svg class="empty-art" viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M24 6v36" class="dim" />
+          <circle cx="24" cy="15" r="3.5" />
+          <circle cx="24" cy="26" r="3.5" />
+          <circle cx="24" cy="37" r="3.5" />
+        </svg>
+        <h2>The record is empty</h2>
+        <p>Every decision this rail makes lands here the moment it is made — allowed or blocked. Run an agent and watch it fill.</p>
+      </div>
+
+      <div id="audit-nomatch" class="empty" hidden>
+        <svg class="empty-art" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="21" cy="21" r="12" />
+          <path d="M30 30l10 10" />
+          <path d="M16 21h10" class="dim" />
+        </svg>
+        <h2>Nothing matches those filters</h2>
+        <p>The record still holds every entry — this view is just narrowed. Widen it to see them again.</p>
+        <button id="nomatch-clear" class="btn">Clear filters</button>
+      </div>
+
+      <div id="audit-rail" class="track-view"></div>
+
+      <div id="audit-table-wrap" class="tablewrap" hidden>
+        <table class="grid">
+          <thead>
+            <tr>
+              <th><button class="sortable mono" id="sort-ts" aria-label="Sort by time">Time <span class="sort-glyph" aria-hidden="true">↓</span></button></th>
+              <th>Agent</th>
+              <th>Mandate</th>
+              <th>Action</th>
+              <th>Result</th>
+              <th>Reason</th>
+              <th class="num">Amount</th>
+            </tr>
+          </thead>
+          <tbody id="audit-rows"></tbody>
+        </table>
+      </div>
+
+      <div class="pager" id="pager" hidden>
+        <span class="pager-text mono" id="pager-text"></span>
+        <div class="pager-btns">
+          <button class="btn btn-quiet" id="page-prev">Previous</button>
+          <button class="btn btn-quiet" id="page-next">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Amounts held as integer paise end to end.</span>
+      <span class="foot-sep" aria-hidden="true">·</span>
+      <span>Mandates validated before Razorpay is called.</span>
+      <span class="foot-sep" aria-hidden="true">·</span>
+      <span>The audit log only ever appends.</span>
+    </footer>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

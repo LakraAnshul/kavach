@@ -1,0 +1,40 @@
+# Secrets. The signing key and the Razorpay credentials live here; .env.example
+# carries the placeholders instead.
+.env
+
+node_modules/
+
+# Runtime state, not source. The mandate store and the append-only audit trail are
+# written by the running server, and a fresh clone is meant to start empty.
+data/*.json
+data/*.jsonl
+
+# Merchant catalogs. A catalog uploaded at runtime is state, not source, so nothing
+# under data/merchants/ is tracked by default — including each merchant's passport.json
+# and any version created by re-uploading.
+#
+# The demo merchant is the exception, and deliberately so: its catalog_v1.json is the
+# migrated form of what used to be a hardcoded array in src/passport/generator.js. It is
+# the data the demo passport is signed over, so a fresh clone has to have it to reproduce
+# the demo. (The server also seeds it on first read, which is what keeps the isolated
+# test directories working — but a committed file means the live demo's catalog is
+# reviewable in a diff rather than materialising at runtime.)
+data/merchants/*
+!data/merchants/kavach-demo-merchant-001/
+data/merchants/kavach-demo-merchant-001/*
+!data/merchants/kavach-demo-merchant-001/catalog_v1.json
+!data/merchants/kavach-demo-merchant-001/meta.json
+
+# The mandate store is written to a .tmp file and renamed over the live one, so a
+# crash mid-write can leave one behind. Backups of live state are equally not source.
+data/*.tmp
+*.bak
+
+# Server logs and scratch files from probing the webhook endpoint by hand.
+*.log
+wh.json
+wh.sig
+
+# Per-suite fixture stores. The suites point KAVACH_DATA_DIR here so they never write
+# into the mandate store or audit trail the demo reads.
+tests/.tmp-data/

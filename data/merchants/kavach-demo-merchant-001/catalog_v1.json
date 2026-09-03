@@ -1,0 +1,32 @@
+[
+  {
+    "id": "sku-mech-keyboard",
+    "name": "Mechanical Keyboard K1",
+    "price_paise": 349900,
+    "stock": 12,
+    "category": "electronics",
+    "return_policy": "7-day return, unused, original packaging",
+    "refund_terms": "Full refund to source within 5 business days of pickup",
+    "available": true
+  },
+  {
+    "id": "sku-usbc-cable",
+    "name": "USB-C Cable 2m Braided",
+    "price_paise": 49900,
+    "stock": 0,
+    "category": "accessories",
+    "return_policy": "15-day replacement only",
+    "refund_terms": "Refund issued only if replacement stock unavailable",
+    "available": false
+  },
+  {
+    "id": "sku-desk-lamp",
+    "name": "LED Desk Lamp Pro",
+    "price_paise": 189500,
+    "stock": 30,
+    "category": "home",
+    "return_policy": "10-day return, restocking fee 5%",
+    "refund_terms": "Refund minus restocking fee within 7 business days",
+    "available": true
+  }
+]
