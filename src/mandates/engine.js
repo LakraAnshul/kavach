@@ -153,6 +153,8 @@ const REJECT_CODES = {
   CATEGORY: "category_not_allowed",
   CONSUMED: "mandate_already_consumed",
   IN_FLIGHT: "mandate_in_flight",
+  REVOKED: "mandate_revoked",
+  ALREADY_TERMINAL: "mandate_already_terminal",
 };
 
 /**
@@ -182,6 +184,16 @@ function evaluateBounds(m, { agent_id, amount_paise, category }, nowMs) {
 
   if (m.agent_id !== agent_id) {
     return deny(REJECT_CODES.NOT_FOUND, `mandate ${m.mandate_id} was not issued to agent ${agent_id}; ownership mismatch`);
+  }
+
+  // EDGE CASE: revoked mandate. Checked before any other bound (expiry, consumed,
+  // in-flight, amount, category) so a revoked mandate can never authorize anything.
+  if (m.status === "revoked") {
+    return deny(
+      REJECT_CODES.REVOKED,
+      `mandate ${m.mandate_id} was explicitly revoked at ${m.revoked_at || "earlier time"} and can no longer authorize payments`,
+      { revoked_at: m.revoked_at }
+    );
   }
 
   // EDGE CASE: expired mandate
@@ -393,12 +405,117 @@ async function releaseMandate(mandate_id, context = {}) {
   });
 }
 
+/**
+ * Irreversibly revoke an active mandate.
+ *
+ * Terminal states (revoked, consumed, expired) reject with 409 mandate_already_terminal.
+ * In-flight claimed mandates reject with 409 mandate_in_flight so live money movement settles safely.
+ */
+async function revokeMandate(mandate_id, { reason = "revoked_by_request" } = {}) {
+  if (!mandate_id || typeof mandate_id !== "string" || !mandate_id.trim()) {
+    audit.append({
+      agent_id: "unknown",
+      mandate_id: mandate_id || "unknown",
+      action: "mandate_revoke_failed",
+      result: "fail",
+      reason_code: REJECT_CODES.MALFORMED,
+      reason: "mandate_id must be a non-empty string",
+      meta: { status: 400 },
+    });
+    return { ok: false, status: 400, reason_code: REJECT_CODES.MALFORMED, explanation: "mandate_id must be a non-empty string" };
+  }
+
+  return enqueueWrite((store) => {
+    const m = store[mandate_id];
+    if (!m) {
+      audit.append({
+        agent_id: "unknown",
+        mandate_id,
+        action: "mandate_revoke_failed",
+        result: "fail",
+        reason_code: REJECT_CODES.NOT_FOUND,
+        reason: `no mandate exists with id ${mandate_id}`,
+        meta: { status: 404 },
+      });
+      return { ok: false, status: 404, reason_code: REJECT_CODES.NOT_FOUND, explanation: `no mandate exists with id ${mandate_id}` };
+    }
+
+    if (m.status === "revoked") {
+      audit.append({
+        agent_id: m.agent_id,
+        mandate_id,
+        action: "mandate_revoke_failed",
+        result: "fail",
+        reason_code: REJECT_CODES.ALREADY_TERMINAL,
+        reason: `mandate ${mandate_id} is already revoked and cannot be modified`,
+        meta: { status: 409, current_status: "revoked", revoked_at: m.revoked_at },
+      });
+      return { ok: false, status: 409, reason_code: REJECT_CODES.ALREADY_TERMINAL, explanation: `mandate ${mandate_id} is already revoked and cannot be modified` };
+    }
+
+    if (m.status === "consumed" || m.consumed_at) {
+      audit.append({
+        agent_id: m.agent_id,
+        mandate_id,
+        action: "mandate_revoke_failed",
+        result: "fail",
+        reason_code: REJECT_CODES.ALREADY_TERMINAL,
+        reason: `mandate ${mandate_id} was already consumed and cannot be revoked`,
+        meta: { status: 409, current_status: "consumed", consumed_at: m.consumed_at },
+      });
+      return { ok: false, status: 409, reason_code: REJECT_CODES.ALREADY_TERMINAL, explanation: `mandate ${mandate_id} was already consumed and cannot be revoked` };
+    }
+
+    const expiryMs = Date.parse(m.expiry_timestamp);
+    if (Number.isFinite(expiryMs) && Date.now() > expiryMs) {
+      audit.append({
+        agent_id: m.agent_id,
+        mandate_id,
+        action: "mandate_revoke_failed",
+        result: "fail",
+        reason_code: REJECT_CODES.ALREADY_TERMINAL,
+        reason: `mandate ${mandate_id} already expired at ${m.expiry_timestamp} and cannot be revoked`,
+        meta: { status: 409, current_status: "expired", expired_at: m.expiry_timestamp },
+      });
+      return { ok: false, status: 409, reason_code: REJECT_CODES.ALREADY_TERMINAL, explanation: `mandate ${mandate_id} already expired and cannot be revoked` };
+    }
+
+    if (m.status === "claimed") {
+      audit.append({
+        agent_id: m.agent_id,
+        mandate_id,
+        action: "mandate_revoke_failed",
+        result: "fail",
+        reason_code: REJECT_CODES.IN_FLIGHT,
+        reason: `mandate ${mandate_id} is currently claimed by an in-flight transaction; cannot revoke until settled`,
+        meta: { status: 409, current_status: "claimed", claimed_at: m.claimed_at },
+      });
+      return { ok: false, status: 409, reason_code: REJECT_CODES.IN_FLIGHT, explanation: `mandate ${mandate_id} is currently claimed by an in-flight transaction; cannot revoke until settled` };
+    }
+
+    m.status = "revoked";
+    m.revoked_at = new Date().toISOString();
+    audit.append({
+      agent_id: m.agent_id,
+      mandate_id,
+      action: "mandate_revoked",
+      result: "ok",
+      reason_code: "revoked_by_request",
+      reason: `mandate explicitly revoked: ${reason}`,
+      meta: { revoked_at: m.revoked_at },
+    });
+    logger.info("mandate_revoked", { mandate_id, agent_id: m.agent_id, revoked_at: m.revoked_at });
+    return { ok: true, status: 200, mandate: { mandate_id: m.mandate_id, status: "revoked", revoked_at: m.revoked_at } };
+  });
+}
+
 module.exports = {
   createMandate: createMandateTx,
   validateMandateForTransaction,
   reserveMandateForTransaction,
   consumeMandate,
   releaseMandate,
+  revokeMandate,
   evaluateBounds,
   loadStore,
   REJECT_CODES,

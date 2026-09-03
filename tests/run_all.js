@@ -17,6 +17,7 @@ const SUITES = [
   ["webhook signature", "test_webhook.js"],
   ["catalog ingestion (http)", "test_catalog_ingestion.js"],
   ["multi-merchant pricing (http)", "test_multi_merchant.js"],
+  ["mandate revocation (lifecycle)", "test_mandate_revocation.js"],
 ];
 
 function runSuite(file) {

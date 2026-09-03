@@ -78,6 +78,12 @@ function humanReason(entry) {
       return `Blocked: this mandate expired on ${stamp(meta.expired_at || e.ts)}. No payment was attempted.`;
     case "mandate_already_consumed":
       return `Blocked: this single-use mandate was already spent on ${stamp(meta.consumed_at)} and cannot be reused.`;
+    case "mandate_revoked":
+      return "Blocked: this mandate was explicitly revoked and can no longer authorize payments.";
+    case "revoked_by_request":
+      return "Revoked: this mandate was explicitly revoked by request and can no longer authorize payments.";
+    case "mandate_already_terminal":
+      return "Refused: this mandate is already in a terminal state and cannot be revoked.";
     case "mandate_in_flight":
       return `Blocked: another transaction claimed this single-use mandate at ${stamp(meta.claimed_at)} and is still settling. It authorises one payment only.`;
     case "claim_released_no_payment":

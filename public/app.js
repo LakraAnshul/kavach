@@ -28,6 +28,8 @@ const state = {
   sortDesc: true,
   entries: [],
   mandates: [],
+  confirmRevoke: new Set(),
+  revokeErrors: new Map(),
   passport: null,
   seen: new Set(),
   fresh: new Set(),
@@ -435,7 +437,9 @@ function renderMandates() {
 
   const blocked = state.entries.filter((e) => e.action === "mandate_validation" && e.result === "fail");
   const blockedValue = blocked.reduce((s, e) => s + (e.amount_paise || 0), 0);
-  const sig = list.map((m) => m.mandate_id + m.computed_status).join(",") + `|${blocked.length}|${blockedValue}`;
+  const confirmKey = [...state.confirmRevoke].sort().join(",");
+  const errorKey = [...state.revokeErrors.entries()].map(([k, v]) => `${k}:${v}`).sort().join(",");
+  const sig = list.map((m) => m.mandate_id + m.computed_status).join(",") + `|${blocked.length}|${blockedValue}|${confirmKey}|${errorKey}`;
   if (state.sig.mandates === sig) return;
   state.sig.mandates = sig;
 
@@ -446,6 +450,7 @@ function renderMandates() {
   const active = by("active").concat(by("claimed"));
   const consumed = by("consumed");
   const expired = by("expired");
+  const revoked = by("revoked");
   const ceiling = active.reduce((s, m) => s + (m.max_spend_paise || 0), 0);
 
   // Four honest instruments. "Blocked at the bound" is the real value figure:
@@ -459,7 +464,7 @@ function renderMandates() {
     <div class="inst aspect-clear">
       <span class="inst-label">Active now</span>
       <span class="inst-value is-signal">${COUNT.format(active.length)}</span>
-      <span class="inst-note">${COUNT.format(consumed.length)} spent · ${COUNT.format(expired.length)} lapsed</span>
+      <span class="inst-note">${COUNT.format(consumed.length)} spent · ${COUNT.format(revoked.length)} revoked · ${COUNT.format(expired.length)} lapsed</span>
     </div>
     <div class="inst">
       <span class="inst-label">Live ceiling</span>
@@ -475,6 +480,7 @@ function renderMandates() {
   const groups = [
     { key: "active", title: "Active", aspect: "aspect-clear", note: "Live spending power right now.", rows: active },
     { key: "consumed", title: "Consumed", aspect: "aspect-clear", note: "Single-use mandates that were spent successfully and closed.", rows: consumed },
+    { key: "revoked", title: "Revoked", aspect: "aspect-danger", note: "Explicitly terminated mid-lifecycle. Permanent block.", rows: revoked },
     { key: "expired", title: "Lapsed", aspect: "aspect-dormant", note: "Past their expiry. They can no longer authorise anything.", rows: expired },
   ].filter((g) => g.rows.length > 0);
 
@@ -497,20 +503,57 @@ function renderMandates() {
     .join("");
 }
 
+function setRowError(mid, msg) {
+  state.revokeErrors.set(mid, msg);
+  state.sig.mandates = null;
+  renderMandates();
+  setTimeout(() => {
+    state.revokeErrors.delete(mid);
+    state.sig.mandates = null;
+    renderMandates();
+  }, 4000);
+}
+
 function mandateRow(m, group, i) {
   const live = group === "active";
   const claimed = m.computed_status === "claimed";
-  const aspect = group === "expired" ? "aspect-dormant" : claimed ? "aspect-caution" : "aspect-clear";
+  const isRevoked = group === "revoked" || m.computed_status === "revoked";
+  const aspect = isRevoked ? "aspect-danger" : group === "expired" ? "aspect-dormant" : claimed ? "aspect-caution" : "aspect-clear";
   // Amber, not green: the authorisation is spoken for but the payment has not
   // landed yet. That is a caution, not a clear.
-  const label = group === "expired" ? "lapsed" : claimed ? "in flight" : group;
+  const label = isRevoked ? "✕ revoked" : group === "expired" ? "lapsed" : claimed ? "in flight" : group;
+  const pillClass = isRevoked ? "pill is-revoked" : group === "consumed" ? "pill is-hollow" : "pill";
   const expiry = live
     ? claimed
       ? `claimed ${rel(m.claimed_at || m.created_at)}`
       : `expires ${rel(m.expiry_timestamp)}`
-    : group === "consumed"
-      ? `spent ${rel(m.consumed_at || m.expiry_timestamp)}`
-      : `expired ${rel(m.expiry_timestamp)}`;
+    : isRevoked
+      ? `revoked ${rel(m.revoked_at || m.created_at)}`
+      : group === "consumed"
+        ? `spent ${rel(m.consumed_at || m.expiry_timestamp)}`
+        : `expired ${rel(m.expiry_timestamp)}`;
+
+  const canRevoke = live && !claimed && m.computed_status === "active";
+  const isConfirming = state.confirmRevoke.has(m.mandate_id);
+  const errorMsg = state.revokeErrors.get(m.mandate_id);
+
+  const confirmBar = isConfirming
+    ? `
+      <div class="m-confirm-bar anim-in">
+        <span class="m-confirm-text">⚠️ Revoke this mandate? This cannot be undone.</span>
+        <div class="m-confirm-actions">
+          <button class="btn-danger-xs" data-action="confirm-revoke" data-mid="${esc(m.mandate_id)}">Confirm</button>
+          <button class="btn-quiet-xs" data-action="cancel-revoke" data-mid="${esc(m.mandate_id)}">Cancel</button>
+        </div>
+      </div>`
+    : "";
+
+  const errorBar = errorMsg
+    ? `
+      <div class="m-row-error anim-in">
+        <span>⚠️ ${esc(errorMsg)}</span>
+      </div>`
+    : "";
 
   return `
     <article class="mrow ${aspect} ${live ? "is-live" : "is-past"} anim-in" style="animation-delay:${Math.min(i, 12) * 28}ms">
@@ -531,8 +574,11 @@ function mandateRow(m, group, i) {
         <time class="m-exp-abs" datetime="${esc(m.expiry_timestamp)}">${esc(clock(m.expiry_timestamp))} · ${esc(daystamp(m.expiry_timestamp))}</time>
       </span>
       <span class="m-status">
-        <span class="pill ${group === "consumed" ? "is-hollow" : ""}">${esc(label)}</span>
+        <span class="${pillClass}">${esc(label)}</span>
+        ${canRevoke && !isConfirming ? `<button class="btn-revoke" data-action="ask-revoke" data-mid="${esc(m.mandate_id)}">Revoke</button>` : ""}
       </span>
+      ${confirmBar}
+      ${errorBar}
     </article>`;
 }
 
@@ -898,6 +944,65 @@ if (merchantSel) {
     state.selectedMerchant = ev.target.value;
     state.sig.passport = null;
     loadPassport();
+  });
+}
+
+const mandateGroupsEl = $("mandate-groups");
+if (mandateGroupsEl) {
+  mandateGroupsEl.addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const mid = btn.dataset.mid;
+    if (!mid) return;
+
+    if (action === "ask-revoke") {
+      state.confirmRevoke.add(mid);
+      state.sig.mandates = null;
+      renderMandates();
+    } else if (action === "cancel-revoke") {
+      state.confirmRevoke.delete(mid);
+      state.sig.mandates = null;
+      renderMandates();
+    } else if (action === "confirm-revoke") {
+      state.confirmRevoke.delete(mid);
+      const target = state.mandates.find((m) => m.mandate_id === mid);
+      const prevStatus = target ? target.computed_status : "active";
+      if (target) {
+        target.computed_status = "revoked";
+        target.status = "revoked";
+        target.revoked_at = new Date().toISOString();
+      }
+      state.sig.mandates = null;
+      renderMandates();
+
+      try {
+        const res = await jget(`/api/mandates/${encodeURIComponent(mid)}/revoke`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (res.status === 200) {
+          await loadRecords();
+        } else {
+          if (target) {
+            target.computed_status = prevStatus;
+            target.status = prevStatus;
+          }
+          const msg = res.body?.explanation || res.body?.error?.message || `Revocation failed (${res.status})`;
+          setRowError(mid, msg);
+          await loadRecords();
+        }
+      } catch {
+        if (target) {
+          target.computed_status = prevStatus;
+          target.status = prevStatus;
+        }
+        setRowError(mid, "Server unreachable — mandate status unchanged");
+        state.sig.mandates = null;
+        renderMandates();
+      }
+    }
   });
 }
 

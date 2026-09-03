@@ -222,7 +222,8 @@ app.get("/api/mandates", async (req, res) => {
       // mandate as active here while the engine was correctly refusing it as expired.
       const expiryMs = Date.parse(m.expiry_timestamp);
       let computed_status;
-      if (m.status === "consumed" || m.consumed_at) computed_status = "consumed";
+      if (m.status === "revoked") computed_status = "revoked";
+      else if (m.status === "consumed" || m.consumed_at) computed_status = "consumed";
       else if (Number.isFinite(expiryMs) && nowMs > expiryMs) computed_status = "expired";
       else if (m.status === "claimed") computed_status = "claimed";
       else computed_status = "active";
@@ -232,6 +233,33 @@ app.get("/api/mandates", async (req, res) => {
   } catch (err) {
     logger.error("mandate_list_failed", { reason: err.message });
     res.status(500).json({ error: { code: "internal", message: "failed to list mandates" } });
+  }
+});
+
+app.post("/api/mandates/:mandate_id/revoke", async (req, res) => {
+  try {
+    const mandate_id = req.params.mandate_id;
+    if (!isNonEmptyString(mandate_id)) {
+      return badRequest(res, "mandate_id must be a non-empty string");
+    }
+    const result = await mandates.revokeMandate(mandate_id);
+    await audit.flush();
+    if (!result.ok) {
+      if (result.status === 404) {
+        return res.status(404).json({ error: { code: "not_found", message: result.explanation, reason_code: result.reason_code } });
+      }
+      if (result.status === 400) {
+        return badRequest(res, result.explanation, { reason_code: result.reason_code });
+      }
+      if (result.status === 409) {
+        return conflict(res, result.reason_code, result.explanation);
+      }
+      return badRequest(res, result.explanation, { reason_code: result.reason_code });
+    }
+    res.status(200).json(result.mandate);
+  } catch (err) {
+    logger.error("mandate_revoke_endpoint_failed", { reason: err.message });
+    res.status(500).json({ error: { code: "internal", message: "failed to revoke mandate" } });
   }
 });
 

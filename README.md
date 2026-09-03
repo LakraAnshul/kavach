@@ -29,6 +29,9 @@ npm run agent:b
 # terminal 4 — category mismatch buyer against second merchant (blocked BEFORE any gateway call)
 npm run agent:c
 
+# terminal 5 — mandate revocation live demo (active -> revoked mid-flow -> blocked 403)
+npm run agent:revoke_demo
+
 # browser
 http://localhost:3000   # Passport / Mandates / Audit Trail tabs
 ```
@@ -36,7 +39,7 @@ http://localhost:3000   # Passport / Mandates / Audit Trail tabs
 ## Tests
 
 ```
-npm test                 # all seven suites, sequentially
+npm test                 # all eight suites, sequentially
 ```
 
 Or individually:

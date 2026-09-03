@@ -17,7 +17,8 @@
     "test:multimerchant": "node tests/test_multi_merchant.js",
     "agent:a": "node agents/agentA.js",
     "agent:b": "node agents/agentB.js",
-    "agent:c": "node agents/agentC.js"
+    "agent:c": "node agents/agentC.js",
+    "agent:revoke_demo": "node agents/agent_revoke_demo.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
