@@ -14,7 +14,9 @@ npm start                   # server on http://localhost:3000
 `.env` keys: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `PASSPORT_SIGNING_KEY`.
 Keys never appear in logs (logger scrubs/masks them). `.gitignore` excludes `.env`.
 
-## 3-minute demo flow
+## 5-Minute Pitch Deck & Demo Flow
+
+- **Interactive Presentation Deck:** Open `http://localhost:3000/slides.html` (or open `slides.html` directly)
 
 ```
 # terminal 1
@@ -33,7 +35,8 @@ npm run agent:c
 npm run agent:revoke_demo
 
 # browser
-http://localhost:3000   # Passport / Mandates / Audit Trail tabs
+http://localhost:3000          # Live Dashboard (Passport / Mandates / Audit Trail)
+http://localhost:3000/slides.html # 4-Slide Pitch Presentation Deck
 ```
 
 ## Tests

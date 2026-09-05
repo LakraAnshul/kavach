@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kavach — Pitch Presentation Deck</title>
+<meta name="description" content="Kavach: Agentic Commerce Trust Rail for Razorpay Builderthon. 5-minute presentation deck explaining the problem, solution, architecture, and live demo." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg-base: #07090e;
+    --bg-surface: #0e131f;
+    --bg-card: rgba(18, 24, 38, 0.7);
+    --bg-card-hover: rgba(26, 35, 54, 0.85);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --border-accent: rgba(99, 102, 241, 0.4);
+
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+
+    --brand-indigo: #6366f1;
+    --brand-indigo-light: #818cf8;
+    --brand-emerald: #10b981;
+    --brand-emerald-glow: rgba(16, 185, 129, 0.25);
+    --brand-rose: #f43f5e;
+    --brand-rose-glow: rgba(244, 63, 94, 0.25);
+    --brand-amber: #f59e0b;
+    --brand-cyan: #06b6d4;
+
+    --font-heading: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Ambient radial background glow */
+  body::before {
+    content: "";
+    position: fixed;
+    top: -20%;
+    left: 20%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(16, 185, 129, 0.04) 50%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(80px);
+  }
+
+  /* Presentation Shell */
+  .presentation {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+  }
+
+  /* Top Navigation & Status Bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 2.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(7, 9, 14, 0.7);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, #4f46e5 0%, #10b981 100%);
+    color: white;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
+  }
+
+  .brand-text {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .brand-tag {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--brand-indigo-light);
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    padding: 0.2rem 0.55rem;
+    border-radius: 100px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .deck-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .slide-counter {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .btn-icon {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.4rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-body);
+  }
+
+  .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+  }
+
+  .btn-live-dashboard {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    font-weight: 500;
+  }
+
+  .btn-live-dashboard:hover {
+    background: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.7);
+    box-shadow: 0 0 16px var(--brand-emerald-glow);
+  }
+
+  /* Progress Bar */
+  .deck-progress {
+    height: 3px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .deck-progress-fill {
+    height: 100%;
+    width: 25%;
+    background: linear-gradient(90deg, var(--brand-indigo), var(--brand-emerald));
+    transition: width 0.4s var(--ease-out);
+  }
+
+  /* Slide Viewport */
+  .slide-viewport {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 3rem 5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(40px) scale(0.98);
+    transition: opacity 0.45s var(--ease-out), transform 0.45s var(--ease-out);
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0) scale(1);
+  }
+
+  .slide.prev {
+    transform: translateX(-40px) scale(0.98);
+  }
+
+  /* Typography & Badges */
+  .badge-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.8rem;
+    border-radius: 100px;
+    margin-bottom: 1rem;
+    width: fit-content;
+  }
+
+  .badge-problem {
+    background: rgba(244, 63, 94, 0.12);
+    border: 1px solid rgba(244, 63, 94, 0.35);
+    color: #fb7185;
+  }
+
+  .badge-solution {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
+  }
+
+  .badge-arch {
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    color: #a5b4fc;
+  }
+
+  .badge-demo {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fbbf24;
+  }
+
+  .slide-title {
+    font-family: var(--font-heading);
+    font-size: 2.85rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .slide-title span.highlight {
+    background: linear-gradient(135deg, #818cf8 0%, #34d399 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .slide-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    max-width: 850px;
+    line-height: 1.5;
+    margin-bottom: 2.5rem;
+  }
+
+  /* Cards Grid Layouts */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1rem;
+    padding: 1.75rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-4px);
+  }
+
+  .card-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.35rem;
+  }
+
+  .icon-danger {
+    background: rgba(244, 63, 94, 0.12);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    color: #fb7185;
+  }
+
+  .icon-emerald {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+  }
+
+  .icon-indigo {
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #818cf8;
+  }
+
+  .icon-amber {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+  }
+
+  .card-title {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.65rem;
+    color: var(--text-primary);
+  }
+
+  .card-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  .card-meta {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Callout Banner */
+  .callout-box {
+    margin-top: 2rem;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .callout-text {
+    font-size: 1.05rem;
+    color: var(--text-primary);
+  }
+
+  .callout-text strong {
+    color: #a5b4fc;
+  }
+
+  /* Slide 3: Architecture Diagram Flow */
+  .arch-canvas {
+    background: rgba(14, 19, 31, 0.85);
+    border: 1px solid var(--border-strong);
+    border-radius: 1.25rem;
+    padding: 2.25rem;
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .arch-pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .arch-node {
+    background: rgba(22, 32, 50, 0.9);
+    border: 1px solid var(--border-subtle);
+    border-radius: 0.85rem;
+    padding: 1.25rem;
+    width: 22%;
+    position: relative;
+    transition: all 0.25s ease;
+  }
+
+  .arch-node:hover {
+    border-color: var(--brand-indigo);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  }
+
+  .arch-node-highlight {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);
+  }
+
+  .arch-node-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--brand-indigo-light);
+    margin-bottom: 0.4rem;
+  }
+
+  .arch-node-name {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+
+  .arch-node-sub {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .arch-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+  }
+
+  .arch-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-top: 0.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .metric-tile {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-val {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #34d399;
+  }
+
+  .metric-lbl {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+  }
+
+  /* Slide 4: Demo Matrix Badges */
+  .agent-badge {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    font-weight: 600;
+    width: fit-content;
+    margin-bottom: 0.75rem;
+  }
+
+  .agent-badge-a { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+  .agent-badge-b { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+  .agent-badge-c { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+  .agent-badge-revoke { background: rgba(129, 140, 248, 0.2); color: #a5b4fc; }
+
+  .code-pill {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-subtle);
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.4rem;
+    color: #cbd5e1;
+    margin-top: 0.75rem;
+  }
+
+  /* Bottom Controls & Legend */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2.5rem;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(7, 9, 14, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+
+  .deck-dots {
+    display: flex;
+    gap: 0.6rem;
+  }
+
+  .deck-dot {
+    width: 2.5rem;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .deck-dot.active {
+    background: linear-gradient(90deg, var(--brand-indigo), var(--brand-emerald));
+    width: 4rem;
+  }
+
+  .keyboard-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+  }
+
+  .key {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-subtle);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.25rem;
+    color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+
+<div class="presentation" id="presentation">
+
+  <!-- ══ TOP BAR ════════════════════════════════════════════════════════ -->
+  <header class="top-bar">
+    <div class="brand-group">
+      <div class="brand-logo">क</div>
+      <div>
+        <span class="brand-text">Kavach</span>
+        <span class="brand-tag">Razorpay Builderthon</span>
+      </div>
+    </div>
+
+    <div class="deck-controls">
+      <span class="slide-counter" id="slide-counter">Slide 1 of 4</span>
+      <button class="btn-icon" id="btn-prev" title="Previous (←)">
+        <span>←</span> Prev
+      </button>
+      <button class="btn-icon" id="btn-next" title="Next (→ or Space)">
+        Next <span>→</span>
+      </button>
+      <button class="btn-icon" id="btn-fullscreen" title="Toggle Fullscreen (F)">
+        ⛶ Fullscreen
+      </button>
+      <a href="/" class="btn-icon btn-live-dashboard" title="Open Kavach Live Dashboard">
+        🚀 Live App ↗
+      </a>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="deck-progress">
+    <div class="deck-progress-fill" id="deck-progress-fill"></div>
+  </div>
+
+  <!-- ══ SLIDE VIEWPORT ═════════════════════════════════════════════════ -->
+  <main class="slide-viewport">
+
+    <!-- ── SLIDE 1: THE PROBLEM ──────────────────────────────────────── -->
+    <section class="slide active" id="slide-1" data-slide="1">
+      <div class="badge-category badge-problem">⚠️ The Core Challenge</div>
+      <h1 class="slide-title">The $1T Dilemma: <span class="highlight">Unbounded AI Agents</span></h1>
+      <p class="slide-subtitle">
+        Autonomous agents can browse, negotiate, and decide. But giving an LLM direct credit card numbers or raw payment API keys is financial Russian roulette.
+      </p>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon icon-danger">🌪️</div>
+          <h2 class="card-title">Hallucination & Drift</h2>
+          <p class="card-desc">
+            LLMs misinterpret quantities, order the wrong SKU tiers, or get trapped in runaway execution loops, draining bank balances within minutes.
+          </p>
+          <div class="card-meta">
+            <span>Risk Level: High</span>
+            <span>Unbounded Loop</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon icon-danger">🎭</div>
+          <h2 class="card-title">Prompt Injection & Tampering</h2>
+          <p class="card-desc">
+            Adversarial websites and altered seller metadata can trick agents into paying inflated prices or accepting hostile non-refundable terms.
+          </p>
+          <div class="card-meta">
+            <span>Attack Vector: Web</span>
+            <span>Price Gouging</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon icon-danger">🔓</div>
+          <h2 class="card-title">All-or-Nothing Access</h2>
+          <p class="card-desc">
+            Payment gateways lack pre-gateway policy enforcement. Once credentials are handed to an agent, there is zero fine-grained spending control.
+          </p>
+          <div class="card-meta">
+            <span>Legacy Gap</span>
+            <span>Zero Granularity</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout-box">
+        <div class="callout-text">
+          💡 <strong>The Fundamental Question:</strong> How do we grant AI agents autonomous purchasing agency without absorbing unlimited financial liability?
+        </div>
+        <button class="btn-icon" onclick="goToSlide(2)">See The Solution →</button>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 2: THE SOLUTION ─────────────────────────────────────── -->
+    <section class="slide" id="slide-2" data-slide="2">
+      <div class="badge-category badge-solution">🛡️ The Solution</div>
+      <h1 class="slide-title">Kavach (कवच): <span class="highlight">The Trust Rail</span></h1>
+      <p class="slide-subtitle">
+        A deterministic, cryptographic safety middleware sitting directly between autonomous AI agents and Razorpay's payment infrastructure.
+      </p>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon icon-emerald">🔏</div>
+          <h2 class="card-title">Cryptographic Passport</h2>
+          <p class="card-desc">
+            HMAC-SHA256 signed catalog manifest. Guarantees prices, inventory, and return policies at signature time. Price tampering breaks validation instantly.
+          </p>
+          <div class="card-meta">
+            <span>HMAC-SHA256</span>
+            <span>Tamper-Evident</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon icon-indigo">⚙️</div>
+          <h2 class="card-title">Atomic Mandate Engine</h2>
+          <p class="card-desc">
+            Strict pre-gateway spending bounds: amount ceilings, category allowlists, expiry timestamps, and single-use burn protection.
+          </p>
+          <div class="card-meta">
+            <span>Hardware-Grade</span>
+            <span>Pre-Gateway Bounds</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-icon icon-amber">🛑</div>
+          <h2 class="card-title">Audit Rail & Kill Switch</h2>
+          <p class="card-desc">
+            Append-only audit trail translating machine decisions into plain language, backed by an instant operator revocation kill-switch with 409 conflict protection.
+          </p>
+          <div class="card-meta">
+            <span>Append-Only</span>
+            <span>Instant Revocation</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout-box">
+        <div class="callout-text">
+          🎯 <strong>Core Principle:</strong> Every bound is evaluated <em>before</em> any gateway call. If a rule fails, zero money moves and zero API calls are wasted.
+        </div>
+        <button class="btn-icon" onclick="goToSlide(3)">View Architecture →</button>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 3: SYSTEM ARCHITECTURE ──────────────────────────────── -->
+    <section class="slide" id="slide-3" data-slide="3">
+      <div class="badge-category badge-arch">🏛️ System Architecture</div>
+      <h1 class="slide-title">Pre-Gateway <span class="highlight">Verification Pipeline</span></h1>
+      <p class="slide-subtitle">
+        Indivisible check-and-claim execution flow guarantees race-condition immunity and zero-trust policy enforcement.
+      </p>
+
+      <div class="arch-canvas">
+        <div class="arch-pipeline">
+          <div class="arch-node">
+            <div class="arch-node-tag">Phase 1</div>
+            <div class="arch-node-name">Autonomous Agent</div>
+            <div class="arch-node-sub">AI shopper requests purchase with Agent ID & Mandate ID</div>
+          </div>
+
+          <div class="arch-arrow">➔</div>
+
+          <div class="arch-node arch-node-highlight">
+            <div class="arch-node-tag">Phase 2 • Core Rail</div>
+            <div class="arch-node-name">Kavach Mandate Engine</div>
+            <div class="arch-node-sub">
+              • Status Check (Active / Revoked)<br/>
+              • Spend Ceiling vs Cap<br/>
+              • Category Allowlist Filter<br/>
+              • Passport Price Verification
+            </div>
+          </div>
+
+          <div class="arch-arrow">➔</div>
+
+          <div class="arch-node">
+            <div class="arch-node-tag">Phase 3 • Split Decision</div>
+            <div class="arch-node-name">Policy Verdict</div>
+            <div class="arch-node-sub">
+              <span style="color:#fb7185">✕ Blocked (403):</span> No money moves<br/>
+              <span style="color:#34d399">✓ Approved (200):</span> Atomic claim
+            </div>
+          </div>
+
+          <div class="arch-arrow">➔</div>
+
+          <div class="arch-node">
+            <div class="arch-node-tag">Phase 4 • Gateway</div>
+            <div class="arch-node-name">Razorpay Order</div>
+            <div class="arch-node-sub">
+              • Secure Order Creation<br/>
+              • Webhook HMAC validation<br/>
+              • Single-use mandate burn
+            </div>
+          </div>
+        </div>
+
+        <div class="arch-metrics">
+          <div class="metric-tile">
+            <span class="metric-val">100%</span>
+            <span class="metric-lbl">Pre-Gateway Isolation (Zero Leakage)</span>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-val">8 / 8</span>
+            <span class="metric-lbl">Passing Test Suites (120+ Assertions)</span>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-val">&lt; 2ms</span>
+            <span class="metric-lbl">Sub-millisecond Middleware Overhead</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout-box">
+        <div class="callout-text">
+          ⚡ <strong>Concurrency Defense:</strong> Serialized check-and-claim mutator guarantees that parallel requests cannot double-spend single-use mandates.
+        </div>
+        <button class="btn-icon" onclick="goToSlide(4)">Live Demo Scenarios →</button>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 4: WORKING DEMO MATRIX ──────────────────────────────── -->
+    <section class="slide" id="slide-4" data-slide="4">
+      <div class="badge-category badge-demo">🎬 Live Demonstration</div>
+      <h1 class="slide-title">4 Real-World <span class="highlight">Battle Scenarios</span></h1>
+      <p class="slide-subtitle">
+        Live scripted personas demonstrating happy path, budget enforcement, category restriction, and operator kill switch.
+      </p>
+
+      <div class="grid-4">
+        <div class="card">
+          <div class="agent-badge agent-badge-a">Agent A • Happy Path</div>
+          <h3 class="card-title">Approved Buyer</h3>
+          <p class="card-desc">
+            Mechanical Keyboard K1 (₹3,499) requested against a ₹5,000 electronics mandate. Mandate clears and burns.
+          </p>
+          <div class="code-pill">npm run agent:a</div>
+          <div class="card-meta">
+            <span style="color:#34d399">HTTP 200 APPROVED</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="agent-badge agent-badge-b">Agent B • Overspend</div>
+          <h3 class="card-title">Budget Ceiling</h3>
+          <p class="card-desc">
+            Agent attempts to spend ₹3,499 against a ₹1,000 ceiling. Blocked pre-gateway; zero Razorpay calls made.
+          </p>
+          <div class="code-pill">npm run agent:b</div>
+          <div class="card-meta">
+            <span style="color:#fb7185">HTTP 403 mandate_exceeded</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="agent-badge agent-badge-c">Agent C • Policy</div>
+          <h3 class="card-title">Category Bound</h3>
+          <p class="card-desc">
+            Agent with equipment-only mandate attempts buying ₹1,450 artisan coffee beans (beverages). Blocked instantly.
+          </p>
+          <div class="code-pill">npm run agent:c</div>
+          <div class="card-meta">
+            <span style="color:#fbbf24">HTTP 403 category_not_allowed</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="agent-badge agent-badge-revoke">Live Kill Switch</div>
+          <h3 class="card-title">Mid-Flow Revoke</h3>
+          <p class="card-desc">
+            Active ₹10,000 mandate revoked via UI drawer. Next transaction attempt is immediately refused.
+          </p>
+          <div class="code-pill">npm run agent:revoke_demo</div>
+          <div class="card-meta">
+            <span style="color:#a5b4fc">HTTP 403 mandate_revoked</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout-box" style="background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%); border-color: rgba(16, 185, 129, 0.4);">
+        <div class="callout-text">
+          🚀 <strong>Switch to Live Working Demo:</strong> Launch the dashboard and run the agent scripts side-by-side!
+        </div>
+        <a href="/" class="btn-icon btn-live-dashboard" style="padding: 0.6rem 1.25rem; font-size: 0.95rem;">
+          Launch Dashboard (http://localhost:3000) ↗
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══ BOTTOM BAR ══════════════════════════════════════════════════════ -->
+  <footer class="bottom-bar">
+    <div class="deck-dots" id="deck-dots">
+      <div class="deck-dot active" onclick="goToSlide(1)" title="Slide 1: The Problem"></div>
+      <div class="deck-dot" onclick="goToSlide(2)" title="Slide 2: The Solution"></div>
+      <div class="deck-dot" onclick="goToSlide(3)" title="Slide 3: Architecture"></div>
+      <div class="deck-dot" onclick="goToSlide(4)" title="Slide 4: Live Demo"></div>
+    </div>
+
+    <div class="keyboard-hint">
+      <span>Navigate:</span>
+      <span class="key">←</span>
+      <span class="key">→</span>
+      <span class="key">Space</span>
+      <span>| Fullscreen:</span>
+      <span class="key">F</span>
+      <span>| Live Demo:</span>
+      <span class="key">/</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  let currentSlide = 1;
+  const totalSlides = 4;
+
+  const slides = document.querySelectorAll('.slide');
+  const dots = document.querySelectorAll('.deck-dot');
+  const counter = document.getElementById('slide-counter');
+  const progressFill = document.getElementById('deck-progress-fill');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const btnFullscreen = document.getElementById('btn-fullscreen');
+
+  function updateSlide(newIndex) {
+    if (newIndex < 1 || newIndex > totalSlides) return;
+    currentSlide = newIndex;
+
+    slides.forEach((s, idx) => {
+      const slideNum = idx + 1;
+      s.classList.remove('active', 'prev');
+      if (slideNum === currentSlide) {
+        s.classList.add('active');
+      } else if (slideNum < currentSlide) {
+        s.classList.add('prev');
+      }
+    });
+
+    dots.forEach((d, idx) => {
+      d.classList.toggle('active', idx + 1 === currentSlide);
+    });
+
+    counter.textContent = `Slide ${currentSlide} of ${totalSlides}`;
+    progressFill.style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+    btnPrev.disabled = currentSlide === 1;
+    btnNext.disabled = currentSlide === totalSlides;
+  }
+
+  function nextSlide() {
+    if (currentSlide < totalSlides) updateSlide(currentSlide + 1);
+  }
+
+  function prevSlide() {
+    if (currentSlide > 1) updateSlide(currentSlide - 1);
+  }
+
+  function goToSlide(n) {
+    updateSlide(n);
+  }
+
+  btnNext.addEventListener('click', nextSlide);
+  btnPrev.addEventListener('click', prevSlide);
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      prevSlide();
+    } else if (e.key === 'f' || e.key === 'F') {
+      toggleFullscreen();
+    } else if (e.key === '/') {
+      window.location.href = '/';
+    } else if (e.key >= '1' && e.key <= '4') {
+      goToSlide(parseInt(e.key, 10));
+    }
+  });
+
+  // Fullscreen toggle
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  btnFullscreen.addEventListener('click', toggleFullscreen);
+
+  // Initialize
+  updateSlide(1);
+</script>
+
+</body>
+</html>

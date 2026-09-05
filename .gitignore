@@ -38,3 +38,7 @@ wh.sig
 # Per-suite fixture stores. The suites point KAVACH_DATA_DIR here so they never write
 # into the mandate store or audit trail the demo reads.
 tests/.tmp-data/
+
+# Video pitch scripts and presenter notes (not pushed to public repo)
+PITCH_SCRIPT*.md
+*pitch*script*.md
